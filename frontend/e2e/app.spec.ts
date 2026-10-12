@@ -61,6 +61,23 @@ test('photo → source review → correction → saved TSV → deletion', async 
     expect(Buffer.concat(chunks).toString('utf8')).toBe(
       'conserve\tv. 節省;保護\nhabitat\tn. 棲息地\nresource\tn. 資源',
     );
+    await page.getByText('使用 Chrome 擴充功能協助填入 Quizlet', { exact: true }).click();
+    await page.getByLabel('字卡集標題', { exact: true }).fill('Conservation vocabulary');
+    const jsonDownloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: '下載擴充功能 JSON', exact: true }).click();
+    const jsonDownload = await jsonDownloadPromise;
+    expect(jsonDownload.suggestedFilename()).toBe('quizlet-cards.json');
+    const jsonChunks: Buffer[] = [];
+    for await (const chunk of await jsonDownload.createReadStream()) jsonChunks.push(Buffer.from(chunk));
+    const packet = JSON.parse(Buffer.concat(jsonChunks).toString('utf8'));
+    expect(packet).toEqual({
+      format: 'photo-vocabulary.quizlet', version: 1, title: 'Conservation vocabulary',
+      cards: [
+        { term: 'conserve', definition: 'v. 節省;保護', confirmed: true },
+        { term: 'habitat', definition: 'n. 棲息地', confirmed: true },
+        { term: 'resource', definition: 'n. 資源', confirmed: true },
+      ],
+    });
     await page.getByLabel('釋義 card-3').fill('自然資源');
     await expect(page.getByLabel('確認 resource', { exact: true })).not.toBeChecked();
     await expect(page.getByLabel('Quizlet TSV')).toHaveCount(0);

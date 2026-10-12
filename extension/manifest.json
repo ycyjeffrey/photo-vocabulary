@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "字拾 · Quizlet Import Helper",
+  "version": "1.0.0",
+  "description": "Load confirmed vocabulary cards and assist with Quizlet's import form. Never publishes automatically.",
+  "permissions": ["activeTab", "scripting", "storage", "clipboardWrite"],
+  "action": {
+    "default_title": "字拾 · 匯入 Quizlet",
+    "default_popup": "popup.html"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": { "default": "Ctrl+Shift+Y", "mac": "Command+Shift+Y" }
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'"
+  }
+}

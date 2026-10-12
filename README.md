@@ -44,6 +44,14 @@ TSV 使用真正的 Tab 與換行，欄位內的 Tab／換行轉為空白。詞�
 
 依據 [Quizlet 官方文字匯入說明](https://help.quizlet.com/hc/en-us/articles/360029977151-Creating-sets-by-importing-content)，文字匯入在網站操作。此專案不依賴 Quizlet API、不收集密碼，也不自動發佈字卡集。
 
+### Chrome 擴充功能（本機載入）
+
+已提供 `extension/` 的 Manifest V3 擴充功能，無需發佈。開啟 `chrome://extensions/` → 開發人員模式 → 載入未封裝項目 → 選本專案的 `extension` 資料夾。
+
+在 app 驗證字卡後，展開「使用 Chrome 擴充功能協助填入 Quizlet」，下載 JSON。到已登入的 Quizlet 建立頁，點擴充功能載入 JSON，再按「填入目前 Quizlet 分頁」。自動偵測失敗可手動開啟 Import，點文字框，再用「填入剛才選取的文字框」。會讀回核對，但不按 Import 確認或 Create。詳見 [擴充功能安裝與操作](extension/README.md)。
+
+已在隔離測試 Chrome 載入擴充功能並驗證表單操作。真實 Quizlet 對測試瀏覽器回傳 403 驗證挑戰，因此登入後網站的最後驗收仍待你在正常 Chrome 操作，不能將合成表單測試當作真實 Quizlet 成功匯入。
+
 ## 儲存與隱私
 
 - 原始檔、EXIF 方向校正後預覽、處理後圖片與 SQLite 都在 `data/`。`DATA_DIR` 可覆寫儲存位置。
@@ -97,6 +105,7 @@ backend/validation.py / model.py
 backend/store.py SQLite、重啟中斷處理
 backend/tests/   API、資料生命週期、配對、模型及實際 OCR 測試
 frontend/e2e/    真正瀏覽器的操作測試
+extension/       可直接載入的 Chrome MV3 擴充功能、共享 JSON schema
 scripts/        設定、啟動、控制樣本產生
 ```
 
@@ -176,4 +185,8 @@ npm run test:e2e
 2. 使用 app 完成來源定位與校正。複製 TSV 到已登入的 Quizlet，選語言，建立字卡集。
 3. 逐張核對 Quizlet 中的卡片數、正反面文字，至少翻看數張；完成 proposal 所定義的三分鐘 demo。
 
-Chrome extension 為 proposal 的加分路徑，本版不實作；必做的人工確認 TSV 匯入路徑已提供。未驗證的 OCR/模型結果不應被當作可靠原文。
+Chrome extension 加分路徑已實作，使用下載 JSON 交接，不建立持續連線或自動發佈。人工 TSV 匯入仍可獨立使用。未驗證的 OCR/模型結果不應被當作可靠原文。
+
+## 本機版本控制
+
+`main` 保存擴充功能開發前的 app baseline（`55051d3`）。擴充功能於 `feat/quizlet-chrome-extension` 分支開發與提交，驗收後可用一般 merge 合併；不覆寫既有提交。尚未設定遠端或推送到 GitHub。照片、模型、環境與本機設定不納入版本控制。

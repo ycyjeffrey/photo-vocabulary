@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>字拾 · Quizlet 匯入助手</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header><strong>字拾</strong><span>Quizlet 匯入助手</span></header>
+  <main>
+    <p>從本機 app 下載已確認字卡的 JSON，再在已登入的 Quizlet 建立頁使用。</p>
+    <label class="file-label">載入已確認字卡（JSON）
+      <input id="file" type="file" accept=".json,application/json">
+    </label>
+    <p id="summary">尚未載入字卡</p>
+    <label>字卡集標題<input id="title" type="text" maxlength="200" disabled></label>
+    <label class="checkbox"><input id="overwrite" type="checkbox">允許取代既有標題／匯入文字</label>
+    <div class="actions">
+      <button id="open">開啟 Quizlet 建立頁 ↗</button>
+      <button id="fill" class="primary" disabled>填入目前 Quizlet 分頁</button>
+      <button id="focused" disabled>填入剛才選取的文字框</button>
+    </div>
+    <details>
+      <summary>找不到 Import？手動貼上備援</summary>
+      <p>在 Quizlet 開啟 Import，點一下貼上文字的大文字框，重新開啟擴充功能並選「填入剛才選取的文字框」。也可複製下方 TSV。</p>
+      <textarea id="tsv" readonly rows="5" aria-label="TSV 預覽"></textarea>
+      <button id="copy" disabled>複製 TSV</button>
+    </details>
+    <p id="status" role="status" aria-live="polite"></p>
+    <p class="hint">擴充功能只填寫與讀回表單，不按 Import 或 Create。請選 Tab／換行分隔，核對張數，手動匯入，再設定英文／繁體中文。</p>
+    <button id="clear" class="quiet">清除擴充功能中的字卡</button>
+    <p class="privacy">只在你點擊時存取目前分頁。不讀取帳密，不傳照片。載入的文字只存於這台電腦的擴充功能中。</p>
+  </main>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

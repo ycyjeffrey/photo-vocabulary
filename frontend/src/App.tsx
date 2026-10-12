@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, download, jsonRequest } from './api';
 import { canEnrich } from './enrichment';
+import { createQuizletPacket } from './quizlet';
 import { PhotoPanel } from './PhotoPanel';
 import type { Card, Crop, Extraction, Health, Library, Photo, Validation } from './types';
 
@@ -29,6 +30,7 @@ export function App() {
   const [reviewOnly, setReviewOnly] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
   const [validation, setValidation] = useState<Validation | null>(null);
+  const [setTitle, setSetTitle] = useState('我的單字集');
   const [pollStopped, setPollStopped] = useState(false);
   const processing = !!job && !['completed', 'failed'].includes(job.status);
   const locked = busy || processing;
@@ -399,6 +401,18 @@ export function App() {
                     <a className="button" href="https://quizlet.com/create-set" target="_blank" rel="noreferrer">開啟 Quizlet ↗</a>
                   </div>
                   <p className="muted">只匯入你確認的文字，不傳送照片。建立前請核對卡片數：{validation.selectedCount}。</p>
+                  <details className="extension-export">
+                    <summary>使用 Chrome 擴充功能協助填入 Quizlet</summary>
+                    <p>先在 chrome://extensions 開啟開發人員模式，載入本專案的 extension 資料夾。
+                      下載下方 JSON，切到 Quizlet 建立頁，點擴充功能載入並填入。Import 與 Create 仍由你操作。</p>
+                    <label>字卡集標題<input aria-label="字卡集標題" value={setTitle} maxLength={200}
+                      onChange={event => setSetTitle(event.target.value)} /></label>
+                    <button disabled={busy} onClick={() => void run(async () => {
+                      const packet = createQuizletPacket(validation, setTitle);
+                      download(JSON.stringify(packet, null, 2), 'quizlet-cards.json', 'application/json;charset=utf-8');
+                      setNotice(`已下載 ${packet.cards.length} 張已確認字卡，請在 Chrome 擴充功能載入 JSON。`);
+                    })}>下載擴充功能 JSON</button>
+                  </details>
                 </>}
               </section>}
             </>}

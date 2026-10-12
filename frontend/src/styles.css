@@ -119,6 +119,8 @@ summary { cursor: pointer; }
 .export-result p { font-size: 12px; color: #74866e; line-height: 1.9; }
 .export-result textarea { width: 100%; font-family: ui-monospace, monospace; font-size: 12px; margin: 0 0 13px; }
 .export-result .toolbar { margin: 0; }
+.extension-export { margin-top: 15px; font-size: 12px; }
+.extension-export label { display: grid; gap: 6px; margin-bottom: 12px; }
 .banner { padding: 14px 17px; border-radius: 9px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
 .banner.error { background: #fff0ec; border: 1px solid #edcdc1; color: #ae5947; }
 .banner.warning { background: #fff7e4; border: 1px solid #ecdcad; color: #8e712f; }
