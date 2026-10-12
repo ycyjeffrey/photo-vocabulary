@@ -3,6 +3,7 @@ import { api, download, jsonRequest } from './api';
 import { canEnrich } from './enrichment';
 import { createQuizletPacket } from './quizlet';
 import { PhotoPanel } from './PhotoPanel';
+import { ThemeToggle } from './ThemeToggle';
 import type { Card, Crop, Extraction, Health, Library, Photo, Validation } from './types';
 
 const stages: Record<Extraction['status'], string> = {
@@ -175,7 +176,10 @@ export function App() {
     <div className="app">
       <header>
         <a href="/" className="brand"><span className="brand-icon">字</span>字拾 <span>Photo Vocabulary</span></a>
-        <span className="local-badge"><span className="dot" /> 本機處理 · 照片不外傳</span>
+        <div className="header-actions">
+          <span className="local-badge"><span className="dot" /> 本機處理 · 照片不外傳</span>
+          <ThemeToggle />
+        </div>
       </header>
       <main>
         <div className="intro">

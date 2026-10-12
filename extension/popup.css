@@ -6,6 +6,7 @@ body { width: 390px; margin: 0; }
 header { display: flex; gap: 12px; align-items: center; background: var(--surface); padding: 18px; border-bottom: 1px solid var(--border); }
 header strong { color: var(--primary); font-size: 22px; }
 header span { font-size: 14px; }
+#theme-toggle { margin-left: auto; padding: 7px; white-space: nowrap; }
 main { padding: 16px 18px; }
 p { font-size: 12px; line-height: 1.7; margin: 0 0 14px; }
 label { display: block; font-size: 12px; margin-bottom: 14px; }
@@ -16,7 +17,7 @@ input[type=checkbox] { accent-color: var(--primary); }
 button { padding: 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
 button:hover { background: var(--primary-soft); }
 button:disabled { opacity: .45; cursor: not-allowed; }
-.primary { background: var(--primary); color: var(--surface); border-color: var(--primary); }
+.primary { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
 .primary:hover:not(:disabled) { background: var(--primary-hover); }
 .actions { display: grid; gap: 8px; margin-bottom: 14px; }
 details { font-size: 12px; margin: 15px 0; }

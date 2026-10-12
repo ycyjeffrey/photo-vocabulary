@@ -1,10 +1,29 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { resolveTheme } from '../theme.js';
 
 const theme = await readFile(new URL('../theme.css', import.meta.url), 'utf8');
-const colors = Object.fromEntries([...theme.matchAll(/--([\w-]+):\s*(#[\da-f]{6});/gi)]
-  .map(match => [match[1], match[2].toLowerCase()]));
+const palettes = [...theme.matchAll(/:root(?:\[data-theme="dark"\])?\s*\{([^}]+)\}/g)]
+  .map(block => Object.fromEntries([...block[1].matchAll(/--([\w-]+):\s*(#[\da-f]+);/gi)]
+    .map(match => [match[1], match[2].toLowerCase()])));
+const [colors, dark] = palettes;
+
+test('theme selection respects a saved choice before the OS preference', () => {
+  assert.equal(resolveTheme('light', true), 'light');
+  assert.equal(resolveTheme('dark', false), 'dark');
+  assert.equal(resolveTheme(null, true), 'dark');
+  assert.equal(resolveTheme(undefined, false), 'light');
+  assert.equal(resolveTheme('invalid', true), 'dark');
+});
+
+test('both palettes define valid, matching color tokens', () => {
+  assert.equal(palettes.length, 2);
+  assert.deepEqual(Object.keys(dark).sort(), Object.keys(colors).sort());
+  for (const palette of palettes) {
+    for (const value of Object.values(palette)) assert.match(value, /^#(?:[\da-f]{6}|[\da-f]{8})$/);
+  }
+});
 
 function luminance(hex) {
   const channels = hex.slice(1).match(/../g).map(channel => {
@@ -33,7 +52,7 @@ test('app and extension use the same local blue/navy theme', async () => {
 
 test('theme text pairs meet WCAG AA contrast for normal text', () => {
   const pairs = [
-    ['surface', 'primary'], ['surface', 'primary-hover'],
+    ['on-primary', 'primary'], ['on-primary', 'primary-hover'],
     ['text', 'surface'], ['text', 'page'], ['text', 'primary-soft'],
     ['muted', 'surface'], ['muted', 'page'], ['muted', 'primary-soft'],
     ['primary', 'surface'], ['primary-hover', 'primary-soft'],
@@ -41,9 +60,11 @@ test('theme text pairs meet WCAG AA contrast for normal text', () => {
     ['error', 'error-soft'], ['error', 'surface'], ['error', 'page'],
     ['model', 'surface'], ['warning', 'surface'],
   ];
-  for (const [foreground, background] of pairs) {
-    const values = [luminance(colors[foreground]), luminance(colors[background])].sort((a, b) => b - a);
-    const contrast = (values[0] + 0.05) / (values[1] + 0.05);
-    assert.ok(contrast >= 4.5, `${foreground} on ${background}: ${contrast.toFixed(2)} < 4.5`);
+  for (const [index, palette] of palettes.entries()) {
+    for (const [foreground, background] of pairs) {
+      const values = [luminance(palette[foreground]), luminance(palette[background])].sort((a, b) => b - a);
+      const contrast = (values[0] + 0.05) / (values[1] + 0.05);
+      assert.ok(contrast >= 4.5, `Theme ${index}: ${foreground} on ${background}: ${contrast.toFixed(2)} < 4.5`);
+    }
   }
 });

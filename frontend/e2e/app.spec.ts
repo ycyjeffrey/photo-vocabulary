@@ -1,6 +1,41 @@
 import { expect, test } from '@playwright/test';
 import path from 'node:path';
 
+test.use({ colorScheme: 'light' });
+
+test('theme follows the system until chosen, persists, and reports unavailable storage', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('/');
+  const toggle = page.getByRole('button', { name: '深色模式', exact: true });
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('html')).toHaveCSS('background-color', 'rgb(10, 9, 45)');
+  await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark');
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#0a092d');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await page.reload();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await toggle.click();
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.reload();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('html')).toHaveCSS('color-scheme', 'light');
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#4255ff');
+
+  await page.addInitScript(() => {
+    Storage.prototype.getItem = () => { throw new Error('Storage blocked'); };
+    Storage.prototype.setItem = () => { throw new Error('Storage blocked'); };
+  });
+  await page.reload();
+  await expect(page.getByRole('status')).toContainText('無法讀取外觀設定');
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByRole('status')).toContainText('無法儲存');
+});
+
 test('photo → source review → correction → saved TSV → deletion', async ({ page, request, context }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -85,12 +120,17 @@ test('photo → source review → correction → saved TSV → deletion', async 
       ],
     });
     await page.getByLabel('釋義 card-3').fill('自然資源');
+    await page.getByRole('button', { name: '深色模式', exact: true }).click();
+    await expect(page.getByLabel('釋義 card-3')).toHaveValue('自然資源');
+    await expect(page.locator('body')).toHaveCSS('color', 'rgb(246, 247, 251)');
+    await expect(page.locator('.brand-icon')).toHaveCSS('color', 'rgb(10, 9, 45)');
     await expect(page.getByLabel('確認 resource', { exact: true })).not.toBeChecked();
     await expect(page.getByLabel('Quizlet TSV')).toHaveCount(0);
     await page.getByLabel('確認 resource', { exact: true }).check();
     await page.getByRole('button', { name: '儲存修改', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('修改已儲存');
     await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await page.getByLabel('開啟已儲存照片').selectOption(imageIds[0]);
     await expect(page.getByLabel('釋義 card-3')).toHaveValue('自然資源');
     await expect(page.getByLabel('確認 resource', { exact: true })).toBeChecked();
@@ -101,6 +141,9 @@ test('photo → source review → correction → saved TSV → deletion', async 
     await expect(page.getByRole('button', { name: '複製 TSV', exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.screenshot({ path: 'test-results/review-mobile.png', fullPage: true });
+    await page.setViewportSize({ width: 320, height: 740 });
+    await expect(page.getByRole('button', { name: '深色模式', exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     page.once('dialog', dialog => dialog.accept());
     await page.getByRole('button', { name: '刪除此照片與辨識資料' }).click();
     await expect(page.getByRole('status')).toContainText('已從本機刪除');

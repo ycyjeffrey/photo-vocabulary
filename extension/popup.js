@@ -1,10 +1,28 @@
 import { MAX_PACKET_BYTES, isQuizletCreateUrl, parsePacket, packetTsv, validatePacket } from './packet.js';
 import { fillQuizlet } from './quizlet.js';
+import { applyTheme, resolveTheme } from './theme.js';
 
-const ui = Object.fromEntries(['file', 'title', 'summary', 'overwrite', 'open', 'fill', 'focused', 'tsv', 'copy', 'clear', 'status']
+const ui = Object.fromEntries(['file', 'title', 'summary', 'overwrite', 'open', 'fill', 'focused', 'tsv', 'copy', 'clear', 'status', 'theme-toggle']
   .map(id => [id, document.getElementById(id)]));
 let packet = null;
 let busy = false;
+const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+let themePreference = null;
+let theme = resolveTheme(null, systemTheme.matches);
+
+function renderTheme() {
+  applyTheme(theme);
+  ui['theme-toggle'].setAttribute('aria-pressed', String(theme === 'dark'));
+  ui['theme-toggle'].textContent = theme === 'dark' ? '淺色模式' : '深色模式';
+  ui['theme-toggle'].title = theme === 'dark' ? '切換淺色模式' : '切換深色模式';
+}
+renderTheme();
+systemTheme.addEventListener('change', () => {
+  if (themePreference === null) {
+    theme = resolveTheme(null, systemTheme.matches);
+    renderTheme();
+  }
+});
 
 function status(message, error = false) {
   ui.status.textContent = message;
@@ -14,7 +32,7 @@ function status(message, error = false) {
 
 function render() {
   for (const id of ['title', 'fill', 'focused', 'copy']) ui[id].disabled = busy || !packet;
-  for (const id of ['file', 'clear', 'open', 'overwrite']) ui[id].disabled = busy;
+  for (const id of ['file', 'clear', 'open', 'overwrite', 'theme-toggle']) ui[id].disabled = busy;
   ui.summary.textContent = packet ? `已載入 ${packet.cards.length} 張已確認字卡` : '尚未載入字卡';
   ui.tsv.value = packet ? packetTsv(packet) : '';
 }
@@ -98,9 +116,22 @@ ui.clear.addEventListener('click', () => run(async () => {
 ui.title.addEventListener('change', () => {
   void currentPacket().catch(error => status(error instanceof Error ? error.message : String(error), true));
 });
+ui['theme-toggle'].addEventListener('click', () => run(async () => {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  themePreference = theme;
+  renderTheme();
+  try {
+    await chrome.storage.local.set({ theme });
+  } catch {
+    throw new Error('外觀已切換，但無法儲存；重新開啟後可能不會保留。');
+  }
+}));
 
 await run(async () => {
-  const stored = await chrome.storage.local.get('packet');
+  const stored = await chrome.storage.local.get(['packet', 'theme']);
+  themePreference = stored.theme === 'dark' || stored.theme === 'light' ? stored.theme : null;
+  theme = resolveTheme(themePreference, systemTheme.matches);
+  renderTheme();
   if (stored.packet) {
     packet = validatePacket(stored.packet);
     ui.title.value = packet.title;

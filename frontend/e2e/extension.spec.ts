@@ -98,7 +98,7 @@ test('refuses non-create routes and ambiguous controls', async ({ page }) => {
 test('unpacked extension loads and validates local packets, retains and clears data', async () => {
   const extensionPath = path.resolve('../extension');
   const context = await chromium.launchPersistentContext('', {
-    channel: 'chromium', headless: true,
+    channel: 'chromium', headless: true, colorScheme: 'light',
     args: [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],
   });
   try {
@@ -112,6 +112,10 @@ test('unpacked extension loads and validates local packets, retains and clears d
     await expect(page.locator('body')).toHaveCSS('color', 'rgb(46, 56, 86)');
     await expect(page.locator('header strong')).toHaveCSS('color', 'rgb(66, 85, 255)');
     await expect(page.locator('#fill')).toBeDisabled();
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await page.emulateMedia({ colorScheme: 'light' });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
     const packet = {
       format: 'photo-vocabulary.quizlet', version: 1, title: payload.title,
       cards: [{ term: '<script>not executable</script>', definition: 'n. 測試', confirmed: true }],
@@ -127,7 +131,21 @@ test('unpacked extension loads and validates local packets, retains and clears d
     await page.mouse.move(0, 0);
     await page.locator('body').screenshot({ path: 'test-results/quizlet-theme-extension.png' });
     await expect(page.locator('#tsv')).toHaveValue('<script>not executable</script>\tn. 測試');
+    await page.locator('#title').fill('Theme test title');
+    await page.locator('#theme-toggle').click();
+    await expect(page.locator('#theme-toggle')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('html')).toHaveCSS('background-color', 'rgb(10, 9, 45)');
+    await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark');
+    await expect(page.locator('#fill')).toHaveCSS('background-color', 'rgb(168, 177, 255)');
+    await expect(page.locator('#fill')).toHaveCSS('color', 'rgb(10, 9, 45)');
+    await expect(page.locator('#title')).toHaveValue('Theme test title');
+    await expect(page.locator('#tsv')).toHaveValue('<script>not executable</script>\tn. 測試');
+    await page.setViewportSize({ width: 390, height: 800 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.locator('body').screenshot({ path: 'test-results/dark-extension.png' });
     await page.reload();
+    await expect(page.locator('#theme-toggle')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#title')).toHaveValue('Theme test title');
     await expect(page.locator('#summary')).toHaveText('已載入 1 張已確認字卡');
     await page.locator('#fill').click();
     await expect(page.getByRole('alert')).toContainText('請先切到');
@@ -141,6 +159,13 @@ test('unpacked extension loads and validates local packets, retains and clears d
     await expect(page.locator('#summary')).toHaveText('尚未載入字卡');
     await page.reload();
     await expect(page.locator('#fill')).toBeDisabled();
+    await expect(page.locator('#theme-toggle')).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('#theme-toggle').click();
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.reload();
+    await expect(page.locator('#theme-toggle')).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('html')).toHaveCSS('color-scheme', 'light');
+    await expect(page.locator('html')).toHaveCSS('background-color', 'rgb(246, 247, 251)');
     expect(errors).toEqual([]);
   } finally {
     await context.close();
