@@ -108,6 +108,9 @@ test('unpacked extension loads and validates local packets, retains and clears d
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`chrome-extension://${id}/popup.html`);
+    await expect(page.locator('html')).toHaveCSS('background-color', 'rgb(246, 247, 251)');
+    await expect(page.locator('body')).toHaveCSS('color', 'rgb(46, 56, 86)');
+    await expect(page.locator('header strong')).toHaveCSS('color', 'rgb(66, 85, 255)');
     await expect(page.locator('#fill')).toBeDisabled();
     const packet = {
       format: 'photo-vocabulary.quizlet', version: 1, title: payload.title,
@@ -118,6 +121,11 @@ test('unpacked extension loads and validates local packets, retains and clears d
     });
     await expect(page.locator('#summary')).toHaveText('已載入 1 張已確認字卡');
     await expect(page.locator('#fill')).toBeEnabled();
+    await expect(page.locator('#fill')).toHaveCSS('background-color', 'rgb(66, 85, 255)');
+    await page.locator('#fill').hover();
+    await expect(page.locator('#fill')).toHaveCSS('background-color', 'rgb(48, 63, 219)');
+    await page.mouse.move(0, 0);
+    await page.locator('body').screenshot({ path: 'test-results/quizlet-theme-extension.png' });
     await expect(page.locator('#tsv')).toHaveValue('<script>not executable</script>\tn. 測試');
     await page.reload();
     await expect(page.locator('#summary')).toHaveText('已載入 1 張已確認字卡');

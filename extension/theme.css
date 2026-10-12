@@ -1,0 +1,29 @@
+/* Shared by the local app and unpacked extension; no remote styles are loaded. */
+:root {
+  color-scheme: light;
+  --primary: #4255ff;
+  --primary-hover: #303fdb;
+  --primary-soft: #edefff;
+  --primary-border: #b8c0ff;
+  --text: #2e3856;
+  --muted: #586380;
+  --page: #f6f7fb;
+  --surface: #ffffff;
+  --border: #d9dde8;
+  --border-strong: #a8b1cf;
+  --focus: #4255ff;
+  --success: #167251;
+  --success-soft: #e6f7ef;
+  --success-border: #aadcc8;
+  --warning: #875600;
+  --warning-soft: #fff6df;
+  --warning-border: #e3bd63;
+  --error: #b3261e;
+  --error-soft: #fff0f0;
+  --error-border: #efb6b6;
+  --model: #6a3fb6;
+  --shadow: #2e38560a;
+  --crop-overlay: #0a092d66;
+  --source-border: #be7900;
+  --source-fill: #ffcd1f33;
+}

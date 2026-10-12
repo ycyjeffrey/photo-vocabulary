@@ -1,29 +1,31 @@
-:root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #243b35; background: #f6f7f3; }
+@import './theme.css';
+
+:root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: var(--page); }
 * { box-sizing: border-box; }
 body { width: 390px; margin: 0; }
-header { display: flex; gap: 12px; align-items: center; background: white; padding: 18px; border-bottom: 1px solid #dfe6df; }
-header strong { color: #176b53; font-size: 22px; }
+header { display: flex; gap: 12px; align-items: center; background: var(--surface); padding: 18px; border-bottom: 1px solid var(--border); }
+header strong { color: var(--primary); font-size: 22px; }
 header span { font-size: 14px; }
 main { padding: 16px 18px; }
 p { font-size: 12px; line-height: 1.7; margin: 0 0 14px; }
 label { display: block; font-size: 12px; margin-bottom: 14px; }
-input[type=text], textarea { display: block; width: 100%; border: 1px solid #ccd9ce; border-radius: 6px; padding: 9px; margin-top: 7px; font: inherit; }
+input[type=text], textarea { display: block; width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 9px; margin-top: 7px; font: inherit; color: var(--text); background: var(--surface); }
 input[type=file] { display: block; width: 100%; margin-top: 10px; font-size: 12px; }
-.file-label { border: 1px dashed #9ebbaa; padding: 13px; border-radius: 8px; background: white; }
-input[type=checkbox] { accent-color: #176b53; }
-button { padding: 10px; border: 1px solid #ccd9ce; border-radius: 7px; background: white; color: #355348; font: inherit; font-size: 12px; cursor: pointer; }
-button:hover { background: #edf4eb; }
+.file-label { border: 1px dashed var(--primary-border); padding: 13px; border-radius: 8px; background: var(--surface); }
+input[type=checkbox] { accent-color: var(--primary); }
+button { padding: 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
+button:hover { background: var(--primary-soft); }
 button:disabled { opacity: .45; cursor: not-allowed; }
-.primary { background: #176b53; color: white; border-color: #176b53; }
-.primary:hover { background: #10533f; }
+.primary { background: var(--primary); color: var(--surface); border-color: var(--primary); }
+.primary:hover:not(:disabled) { background: var(--primary-hover); }
 .actions { display: grid; gap: 8px; margin-bottom: 14px; }
 details { font-size: 12px; margin: 15px 0; }
 summary { cursor: pointer; margin-bottom: 10px; }
 textarea { resize: vertical; margin-bottom: 10px; }
-#summary { color: #176b53; font-weight: 600; }
-#status:not(:empty) { padding: 12px; background: #e8f3e8; border-radius: 7px; }
-#status.error { background: #fff0e9; color: #a14c38; }
-.hint, .privacy { color: #718078; }
+#summary { color: var(--primary-hover); font-weight: 600; }
+#status:not(:empty) { padding: 12px; background: var(--primary-soft); border-radius: 7px; }
+#status.error { background: var(--error-soft); color: var(--error); }
+.hint, .privacy { color: var(--muted); }
 .privacy { font-size: 10px; margin: 10px 0 0; }
-.quiet { padding: 6px 0; background: transparent; border: 0; color: #a05f53; }
-:focus-visible { outline: 3px solid #7ab89f; outline-offset: 2px; }
+.quiet { padding: 6px 0; background: transparent; border: 0; color: var(--error); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }

@@ -13,8 +13,14 @@ test('photo → source review → correction → saved TSV → deletion', async 
   try {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: '拍下單字，留下所學。' })).toBeVisible();
+    await expect(page.locator('html')).toHaveCSS('background-color', 'rgb(246, 247, 251)');
+    await expect(page.locator('body')).toHaveCSS('color', 'rgb(46, 56, 86)');
+    await expect(page.locator('.brand-icon')).toHaveCSS('background-color', 'rgb(66, 85, 255)');
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#4255ff');
     await page.getByLabel('上傳單字表照片').setInputFiles(path.resolve('../.local/demo/single.png'));
     await expect(page.getByRole('button', { name: '擷取單字', exact: true })).toBeEnabled();
+    await expect(page.getByRole('button', { name: '擷取單字', exact: true }))
+      .toHaveCSS('background-color', 'rgb(66, 85, 255)');
     await page.getByRole('button', { name: '擷取單字', exact: true }).click();
     await expect(page.locator('.vocab-card')).toHaveCount(3, { timeout: 30000 });
     await page.getByRole('button', { name: '查看來源' }).first().click();
