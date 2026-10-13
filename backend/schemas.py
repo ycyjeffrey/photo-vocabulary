@@ -24,7 +24,7 @@ class ExtractionRequest(StrictModel):
     imageId: str
     rotation: Literal[0, 90, 180, 270] = 0
     crop: Crop | None = None
-    layout: Literal["auto", "single", "double"] = "auto"
+    layout: Literal["auto", "single", "double", "eng-zh"] = "auto"
 
 
 class Block(StrictModel):
@@ -33,6 +33,7 @@ class Block(StrictModel):
     bbox: tuple[int, int, int, int]
     ocr_score: float = Field(ge=0, le=1)
     original_text: str | None = None
+    language: Literal["eng", "chi_tra", "chi_tra+eng"] = "chi_tra+eng"
 
 
 class Card(StrictModel):

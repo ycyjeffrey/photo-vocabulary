@@ -3,6 +3,7 @@ export type Photo = { imageId: string; width: number; height: number; previewUrl
 export type Block = {
   id: string; text: string; bbox: [number, number, number, number]; ocr_score: number;
   original_text?: string | null;
+  language?: 'eng' | 'chi_tra' | 'chi_tra+eng';
 };
 export type Card = {
   id: string;
@@ -29,7 +30,7 @@ export type Extraction = {
   error: string | null;
   processedUrl?: string;
   transform?: { processedSize: [number, number] };
-  settings: { rotation: 0 | 90 | 180 | 270; crop: Crop | null; layout: 'auto' | 'single' | 'double' };
+  settings: { rotation: 0 | 90 | 180 | 270; crop: Crop | null; layout: 'auto' | 'single' | 'double' | 'eng-zh' };
   elapsedMs: number;
   cacheHit: boolean;
 };

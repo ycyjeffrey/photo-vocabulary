@@ -26,7 +26,7 @@ from .store import Store
 from .validation import validate_cards
 
 ROOT = Path(__file__).resolve().parents[1]
-PIPELINE_VERSION = "tesseract-best-chi_tra-eng-regions-recheck-v3"
+PIPELINE_VERSION = "tesseract-best-language-columns-v4"
 LOGGER = logging.getLogger(__name__)
 ALLOWED_ORIGINS = {
     "http://localhost:5173", "http://127.0.0.1:5173",

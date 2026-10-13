@@ -7,7 +7,7 @@ from PIL import Image
 from pytesseract import Output
 
 from .schemas import Block
-from .layout import HAN, POS, detect_boundary, join_text, visual_rows
+from .layout import HAN, POS, detect_boundary, detect_language_boundary, join_text, visual_rows
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -56,20 +56,35 @@ def recognize(path: Path, layout: str = "auto", on_call: Callable[[], None] | No
                 id=f"b{len(blocks) + 1}", text=text.strip(),
                 bbox=(x, y, x + data["width"][index], y + data["height"][index]),
                 ocr_score=min(1, max(0, score / 100)),
+                language=language,
             ))
         return blocks
 
+    def vocabulary_region(image: Image.Image, offset: int = 0,
+                          initial: list[Block] | None = None) -> list[Block]:
+        initial = region(image, offset) if initial is None else initial
+        boundary = detect_language_boundary(initial)
+        if boundary is None:
+            return initial
+        split = boundary - offset
+        return (region(image.crop((0, 0, split, image.height)), offset, language="eng")
+                + region(image.crop((split, 0, image.width, image.height)), boundary, language="chi_tra"))
+
     with Image.open(path) as image:
-        initial = [] if layout == "double" else region(image)
+        initial = [] if layout in {"double", "eng-zh"} else region(image)
         boundary = image.width / 2 if layout == "double" else (
             detect_boundary(initial, image.width) if layout == "auto" else None
         )
-        if boundary is None:
-            blocks = initial
+        if layout == "eng-zh":
+            split = image.width // 2
+            blocks = region(image.crop((0, 0, split, image.height)), language="eng")
+            blocks += region(image.crop((split, 0, image.width, image.height)), split, language="chi_tra")
+        elif boundary is None:
+            blocks = vocabulary_region(image, initial=initial)
         else:
             split = round(boundary)
-            blocks = region(image.crop((0, 0, split, image.height)))
-            blocks += region(image.crop((split, 0, image.width, image.height)), split)
+            blocks = vocabulary_region(image.crop((0, 0, split, image.height)))
+            blocks += vocabulary_region(image.crop((split, 0, image.width, image.height)), split)
         # English models sometimes interpret Chinese strokes as Latin letters. Recheck
         # only suspect definition regions, retaining the original reading for review.
         column_blocks = [blocks] if boundary is None else [

@@ -65,10 +65,19 @@ def generate(output: Path, font_path: str | None = None):
     row(draw, 65, 370, ("resource", "n.", ""))
     wrapped.save(output / "wrapped.png")
 
+    bilingual_entries = [("dog", "", "狗"), ("cat", "", "貓"), ("bird", "", "鳥")]
+    bilingual = Image.new("RGB", (900, 410), "white")
+    draw = ImageDraw.Draw(bilingual)
+    for index, (term, _, definition) in enumerate(bilingual_entries):
+        draw.text((65, 65 + index * 100), term, font=english, fill="#202020")
+        draw.text((520, 62 + index * 100), definition, font=chinese, fill="#202020")
+    bilingual.save(output / "bilingual.png")
+
     expected = {
         "notice": "Generated controlled samples, not real photos. No textbook content copied.",
         "single": [dict(zip(("term", "part_of_speech", "definition"), entry)) for entry in SAMPLES],
         "double": [dict(zip(("term", "part_of_speech", "definition"), entry)) for entry in SAMPLES + RIGHT],
+        "bilingual": [dict(zip(("term", "part_of_speech", "definition"), entry)) for entry in bilingual_entries],
         "wrapped": [dict(zip(("term", "part_of_speech", "definition"), entry))
                     for entry in [SAMPLES[0], SAMPLES[1], ("resource", "n.", "")]],
     }
@@ -82,4 +91,4 @@ if __name__ == "__main__":
     parser.add_argument("--font")
     args = parser.parse_args()
     generate(args.output, args.font)
-    print(f"Created three controlled samples and ground truth in {args.output}")
+    print(f"Created four controlled samples and ground truth in {args.output}")

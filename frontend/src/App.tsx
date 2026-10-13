@@ -19,7 +19,7 @@ export function App() {
   const [photo, setPhoto] = useState<Photo | null>(null);
   const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(0);
   const [crop, setCrop] = useState<Crop | null>(null);
-  const [layout, setLayout] = useState<'auto' | 'single' | 'double'>('auto');
+  const [layout, setLayout] = useState<Extraction['settings']['layout']>('auto');
   const [job, setJob] = useState<Extraction | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
   const [activeCard, setActiveCard] = useState('');
@@ -258,12 +258,16 @@ export function App() {
               <div className="extraction-controls">
                 <label>版面 <select value={layout} disabled={locked}
                   onChange={event => setLayout(event.target.value as typeof layout)}>
-                  <option value="auto">自動判斷</option><option value="single">單欄</option><option value="double">雙欄</option>
+                  <option value="auto">自動判斷</option><option value="single">單組單字表</option>
+                  <option value="eng-zh">左英文｜右中文</option><option value="double">左右各一組單字表</option>
                 </select></label>
                 <button className="primary" onClick={extract} disabled={locked || !health?.ocrReady}>
                   {processing ? stages[job.status] + '…' : '擷取單字'}
                 </button>
               </div>
+              {layout === 'eng-zh' && <p className="muted">
+                左半部用英文辨識，右半部用繁體中文辨識，依同一列配對。請裁切到英中分隔位於圖片中央。
+              </p>}
               {processing && <div role="status" className="progress"><span />{stages[job.status]}，請稍候。
                 {pollStopped && <button onClick={() => { setPollStopped(false); setError(''); }}>重新連線</button>}
               </div>}

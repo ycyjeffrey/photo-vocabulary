@@ -65,7 +65,7 @@ h3 { font-size: 17px; font-weight: 600; }
 .crop-inputs legend { font-size: 11px; color: var(--muted); }
 .crop-inputs label { font-size: 11px; flex: 1; min-width: 0; color: var(--muted); }
 .crop-inputs input { width: 100%; padding: 6px; margin-top: 4px; }
-.extraction-controls { display: flex; justify-content: space-between; gap: 14px; align-items: center; }
+.extraction-controls { display: flex; justify-content: space-between; gap: 14px; align-items: center; flex-wrap: wrap; }
 .extraction-controls label { display: flex; gap: 9px; align-items: center; font-size: 12px; }
 .extraction-controls select { font-size: 12px; padding: 8px; }
 .text-button { border: 0; background: transparent; padding: 0; margin-top: 17px; font-size: 11px; font-weight: 400; }

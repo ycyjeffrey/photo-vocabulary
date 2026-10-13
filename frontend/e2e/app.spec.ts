@@ -3,6 +3,38 @@ import path from 'node:path';
 
 test.use({ colorScheme: 'light' });
 
+test('English-left Chinese-right layout pairs, exports and restores dog with 狗', async ({ page, request }) => {
+  const photo = await request.post('/v1/images', {
+    multipart: { file: { name: 'bilingual.png', mimeType: 'image/png',
+      buffer: await (await import('node:fs/promises')).readFile(path.resolve('../.local/demo/bilingual.png')) } },
+  });
+  const { imageId } = await photo.json();
+  try {
+    await page.goto('/');
+    await page.getByLabel('開啟已儲存照片').selectOption(imageId);
+    await page.getByRole('combobox', { name: '版面', exact: true }).selectOption('eng-zh');
+    await expect(page.getByText('請裁切到英中分隔位於圖片中央。', { exact: false })).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.getByRole('button', { name: '擷取單字', exact: true }).click();
+    await expect(page.locator('.vocab-card')).toHaveCount(3, { timeout: 30000 });
+    await expect(page.getByLabel('單字 card-1')).toHaveValue('dog');
+    await expect(page.getByLabel('釋義 card-1')).toHaveValue('狗');
+    await expect(page.getByLabel('釋義 card-2')).toHaveValue('貓');
+    await page.getByLabel('選取 cat', { exact: true }).uncheck();
+    await page.getByLabel('選取 bird', { exact: true }).uncheck();
+    await page.getByLabel('確認 dog', { exact: true }).check();
+    await page.getByRole('button', { name: '驗證並產生 TSV' }).click();
+    await expect(page.getByLabel('Quizlet TSV')).toHaveValue('dog\t狗');
+    await page.reload();
+    await page.getByLabel('開啟已儲存照片').selectOption(imageId);
+    await expect(page.getByRole('combobox', { name: '版面', exact: true })).toHaveValue('eng-zh');
+    await expect(page.getByLabel('釋義 card-1')).toHaveValue('狗');
+  } finally {
+    await request.delete(`/v1/images/${imageId}`);
+  }
+});
+
 test('theme follows the system until chosen, persists, and reports unavailable storage', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
