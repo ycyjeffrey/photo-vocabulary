@@ -26,7 +26,7 @@ from .store import Store
 from .validation import validate_cards
 
 ROOT = Path(__file__).resolve().parents[1]
-PIPELINE_VERSION = "tesseract-best-language-columns-v4"
+PIPELINE_VERSION = "tesseract-eng-paddleocr-v5-chinese-v1"
 LOGGER = logging.getLogger(__name__)
 ALLOWED_ORIGINS = {
     "http://localhost:5173", "http://127.0.0.1:5173",
@@ -134,6 +134,11 @@ def create_app(data_dir: Path | None = None, recognizer=None) -> FastAPI:
                 blocks = ocr.recognize(output, request.layout, lambda: store.bump("ocrCalls"))
             stage("structuring")
             cards, warnings = structure(blocks, payload["transform"]["processedSize"][0], request.layout)
+            if not recognizer and any(b.language == "chi_tra+eng" for b in blocks):
+                warnings.append(
+                    "部分區域無法確認英中分隔，仍保留混合 OCR 初讀結果。"
+                    "請選擇「左英文｜右中文」並調整裁切，以使用英文 Tesseract／中文 PaddleOCR 分開辨識。"
+                )
             payload.update(
                 ocr_blocks=[b.model_dump() for b in blocks],
                 draft_cards=[c.model_dump() for c in cards], warnings=warnings,

@@ -34,6 +34,7 @@ class Block(StrictModel):
     ocr_score: float = Field(ge=0, le=1)
     original_text: str | None = None
     language: Literal["eng", "chi_tra", "chi_tra+eng"] = "chi_tra+eng"
+    ocr_engine: Literal["tesseract", "paddleocr"] = "tesseract"
 
 
 class Card(StrictModel):

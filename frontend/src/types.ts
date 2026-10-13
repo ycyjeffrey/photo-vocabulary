@@ -4,6 +4,7 @@ export type Block = {
   id: string; text: string; bbox: [number, number, number, number]; ocr_score: number;
   original_text?: string | null;
   language?: 'eng' | 'chi_tra' | 'chi_tra+eng';
+  ocr_engine?: 'tesseract' | 'paddleocr';
 };
 export type Card = {
   id: string;

@@ -104,7 +104,7 @@ test('photo → source review → correction → saved TSV → deletion', async 
     expect(Math.abs(overlay!.x - canvas!.x - source.bbox[0] / extraction.transform.processedSize[0] * canvas!.width)).toBeLessThan(1);
     expect(Math.abs(overlay!.y - canvas!.y - source.bbox[1] / extraction.transform.processedSize[1] * canvas!.height)).toBeLessThan(1);
     await expect(page.getByLabel('單字 card-1')).toHaveValue('conserve');
-    await expect(page.getByLabel('釋義 card-1')).toHaveValue('節省;保護');
+    await expect(page.getByLabel('釋義 card-1')).toHaveValue('節省；保護');
 
     // A card is never exportable merely because OCR selected it.
     await page.getByRole('button', { name: '驗證並產生 TSV' }).click();
@@ -117,12 +117,12 @@ test('photo → source review → correction → saved TSV → deletion', async 
     }
     await page.getByRole('button', { name: '驗證並產生 TSV' }).click();
     await expect(page.getByLabel('Quizlet TSV')).toHaveValue(
-      'conserve\tv. 節省;保護\nhabitat\tn. 棲息地\nresource\tn. 資源',
+      'conserve\tv. 節省；保護\nhabitat\tn. 棲息地\nresource\tn. 資源',
     );
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await page.getByRole('button', { name: '複製 TSV', exact: true }).click();
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-      'conserve\tv. 節省;保護\nhabitat\tn. 棲息地\nresource\tn. 資源',
+      'conserve\tv. 節省；保護\nhabitat\tn. 棲息地\nresource\tn. 資源',
     );
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: '下載 TSV', exact: true }).click();
@@ -132,7 +132,7 @@ test('photo → source review → correction → saved TSV → deletion', async 
     const chunks: Buffer[] = [];
     for await (const chunk of stream) chunks.push(Buffer.from(chunk));
     expect(Buffer.concat(chunks).toString('utf8')).toBe(
-      'conserve\tv. 節省;保護\nhabitat\tn. 棲息地\nresource\tn. 資源',
+      'conserve\tv. 節省；保護\nhabitat\tn. 棲息地\nresource\tn. 資源',
     );
     await page.getByText('使用 Chrome 擴充功能協助填入 Quizlet', { exact: true }).click();
     await page.getByLabel('字卡集標題', { exact: true }).fill('Conservation vocabulary');
@@ -146,7 +146,7 @@ test('photo → source review → correction → saved TSV → deletion', async 
     expect(packet).toEqual({
       format: 'photo-vocabulary.quizlet', version: 1, title: 'Conservation vocabulary',
       cards: [
-        { term: 'conserve', definition: 'v. 節省;保護', confirmed: true },
+        { term: 'conserve', definition: 'v. 節省；保護', confirmed: true },
         { term: 'habitat', definition: 'n. 棲息地', confirmed: true },
         { term: 'resource', definition: 'n. 資源', confirmed: true },
       ],
@@ -196,7 +196,7 @@ test('wrapped definitions, uncertain exclusions and manual card recovery', async
     await page.getByLabel('開啟已儲存照片').selectOption(imageId);
     await page.getByRole('button', { name: '擷取單字', exact: true }).click();
     await expect(page.locator('.vocab-card')).toHaveCount(3, { timeout: 30000 });
-    await expect(page.getByLabel('釋義 card-1')).toHaveValue('節省;保護');
+    await expect(page.getByLabel('釋義 card-1')).toHaveValue('節省；保護');
     await expect(page.getByLabel('選取 resource', { exact: true })).not.toBeChecked();
     await expect(page.getByLabel('選取 resource', { exact: true })).toBeDisabled();
     await page.getByLabel('釋義 card-3').fill('資源');
@@ -211,7 +211,7 @@ test('wrapped definitions, uncertain exclusions and manual card recovery', async
     await page.getByLabel('確認 conserve', { exact: true }).check();
     await page.getByRole('button', { name: '驗證並產生 TSV' }).click();
     await expect(page.getByLabel('Quizlet TSV')).toHaveValue(
-      'conserve\tv. 節省;保護\nresource\tn. 資源\nlook after\t照顧',
+      'conserve\tv. 節省；保護\nresource\tn. 資源\nlook after\t照顧',
     );
   } finally {
     await request.delete(`/v1/images/${imageId}`);

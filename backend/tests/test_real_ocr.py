@@ -50,16 +50,10 @@ def test_english_left_chinese_right(tmp_path, layout, one_row, monkeypatch):
 
     monkeypatch.setattr(ocr.pytesseract, "image_to_data", tracked)
     blocks = recognize(path, layout)
-    assert "eng" in languages and "chi_tra" in languages
+    assert "eng" in languages and "chi_tra" not in languages
+    assert any(b.ocr_engine == "paddleocr" and b.language == "chi_tra" for b in blocks)
     cards, warnings = structure(blocks, 900, layout)
     actual = [{"term": c.term, "part_of_speech": c.part_of_speech, "definition": c.definition}
               for c in cards]
-    assert actual[:2] == expected[:2], (cards, warnings)
-    assert [c.term for c in cards] == [entry["term"] for entry in expected]
-    # This font's isolated 鳥 can be read as 島. Never silently approve that reading
-    # or replace it with a dictionary guess based on the English word.
-    for card, truth in zip(cards, expected):
-        assert card.definition
-        if card.definition != truth["definition"]:
-            assert card.needs_review and not card.selected
-        assert not card.confirmed
+    assert actual == expected, (cards, warnings)
+    assert all(not card.confirmed for card in cards)
