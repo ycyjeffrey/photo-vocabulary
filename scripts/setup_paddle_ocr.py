@@ -12,6 +12,7 @@ BASE_URL = "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inferenc
 MODELS = {
     "PP-OCRv5_server_det": "22a33e0ba6a21425ea4192da03bf4395c9a0c67902bd924b7328fc859073045d",
     "PP-OCRv5_server_rec": "d99be2ffd348943ab52876179168be4fb5b14f5f0812f2ae4c76d89ec2ea750a",
+    "en_PP-OCRv5_mobile_rec": "e595b4cf2ffad19fbb5a61ba345d63939577a3ab8717b6e5995642590c9101b4",
 }
 
 
@@ -28,7 +29,7 @@ def install():
     for name, checksum in MODELS.items():
         archive_path = root / f"{name}_infer.tar"
         if digest(archive_path) != checksum:
-            print(f"Downloading Chinese OCR model: {name}", flush=True)
+            print(f"Downloading PaddleOCR model: {name}", flush=True)
             partial = archive_path.with_suffix(".tar.part")
             try:
                 with httpx.stream("GET", f"{BASE_URL}/{archive_path.name}",
@@ -38,7 +39,7 @@ def install():
                         for chunk in response.iter_bytes():
                             output.write(chunk)
                 if digest(partial) != checksum:
-                    raise RuntimeError(f"Chinese OCR model checksum mismatch: {name}")
+                    raise RuntimeError(f"PaddleOCR model checksum mismatch: {name}")
                 partial.replace(archive_path)
             finally:
                 partial.unlink(missing_ok=True)

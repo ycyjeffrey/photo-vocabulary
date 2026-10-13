@@ -8,7 +8,7 @@ from scripts.generate_demo import generate
 from PIL import Image
 
 
-@pytest.mark.skipif(os.environ.get("RUN_OCR_TESTS") != "1", reason="Set RUN_OCR_TESTS=1 for actual Tesseract tests")
+@pytest.mark.skipif(os.environ.get("RUN_OCR_TESTS") != "1", reason="Set RUN_OCR_TESTS=1 for actual OCR tests")
 def test_three_controlled_bilingual_samples(tmp_path):
     ready, reason = readiness()
     assert ready, reason
@@ -17,7 +17,7 @@ def test_three_controlled_bilingual_samples(tmp_path):
         blocks = recognize(tmp_path / f"{name}.png")
         assert blocks and all(b.bbox[2] > b.bbox[0] and b.bbox[3] > b.bbox[1] for b in blocks)
         cards, warnings = structure(blocks, width, "auto")
-        # Tesseract normalizes full-width semicolons to ASCII. Ignore only that
+        # OCR may normalize full-width semicolons to ASCII. Ignore only that
         # typographic width here; every term, POS, and Chinese character must match.
         actual = [{"term": c.term, "part_of_speech": c.part_of_speech,
                    "definition": c.definition.replace(";", "；")} for c in cards]
@@ -29,7 +29,7 @@ def test_three_controlled_bilingual_samples(tmp_path):
             assert cards[-1].needs_review and not cards[-1].selected
 
 
-@pytest.mark.skipif(os.environ.get("RUN_OCR_TESTS") != "1", reason="Set RUN_OCR_TESTS=1 for actual Tesseract tests")
+@pytest.mark.skipif(os.environ.get("RUN_OCR_TESTS") != "1", reason="Set RUN_OCR_TESTS=1 for actual OCR tests")
 @pytest.mark.parametrize("layout", ["auto", "single", "eng-zh"])
 @pytest.mark.parametrize("one_row", [False, True])
 def test_english_left_chinese_right(tmp_path, layout, one_row, monkeypatch):
@@ -50,7 +50,9 @@ def test_english_left_chinese_right(tmp_path, layout, one_row, monkeypatch):
 
     monkeypatch.setattr(ocr.pytesseract, "image_to_data", tracked)
     blocks = recognize(path, layout)
-    assert "eng" in languages and "chi_tra" not in languages
+    assert all(language == "chi_tra+eng" for language in languages)
+    assert len(languages) == (0 if layout == "eng-zh" else 1)
+    assert any(b.ocr_engine == "paddleocr" and b.language == "eng" for b in blocks)
     assert any(b.ocr_engine == "paddleocr" and b.language == "chi_tra" for b in blocks)
     cards, warnings = structure(blocks, 900, layout)
     actual = [{"term": c.term, "part_of_speech": c.part_of_speech, "definition": c.definition}

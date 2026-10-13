@@ -7,7 +7,7 @@ from PIL import Image
 from pytesseract import Output
 
 from .schemas import Block
-from . import chinese_ocr
+from . import paddle_ocr
 from .layout import HAN, POS, detect_boundary, detect_language_boundary, join_text, visual_rows
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,7 +25,7 @@ def model_signature() -> dict:
         for language in ("eng", "chi_tra")
         if (file := path / f"{language}.traineddata").is_file()
     ]
-    return {"tesseract": tesseract, "chinese": chinese_ocr.model_signature()}
+    return {"layout_probe": tesseract, "recognition": paddle_ocr.model_signature()}
 
 
 def readiness() -> tuple[bool, str]:
@@ -34,10 +34,10 @@ def readiness() -> tuple[bool, str]:
         missing = {"eng", "chi_tra"} - set(languages)
         if missing:
             return False, "Missing OCR languages: " + ", ".join(sorted(missing)) + ". Run scripts/setup.sh."
-        ready, message = chinese_ocr.readiness()
+        ready, message = paddle_ocr.readiness()
         if not ready:
             return False, message
-        return True, "English: Tesseract eng; Chinese: PaddleOCR PP-OCRv5 (local CPU)"
+        return True, "PaddleOCR: dedicated English + Chinese models (local CPU); Tesseract layout probe"
     except (pytesseract.TesseractNotFoundError, pytesseract.TesseractError, OSError) as exc:
         return False, f"Tesseract is unavailable: {exc}"
 
@@ -47,8 +47,8 @@ def recognize(path: Path, layout: str = "auto", on_call: Callable[[], None] | No
                language: str = "chi_tra+eng") -> list[Block]:
         if on_call:
             on_call()
-        if language == "chi_tra":
-            return chinese_ocr.recognize(image, offset, offset_y)
+        if language in {"eng", "chi_tra"}:
+            return paddle_ocr.recognize(image, offset, offset_y, language=language)
         data = pytesseract.image_to_data(
             image, lang=language, config=f"{configuration()} --psm 6",
             output_type=Output.DICT, timeout=90,
@@ -90,7 +90,12 @@ def recognize(path: Path, layout: str = "auto", on_call: Callable[[], None] | No
         initial = region(image, offset) if initial is None else initial
         boundary = detect_language_boundary(initial)
         if boundary is None:
-            return initial
+            if any(HAN.search(b.text) for b in initial):
+                raise RuntimeError(
+                    "無法可靠分隔英中欄位。請選擇「左英文｜右中文」，"
+                    "並裁切到分隔線位於圖片中央後重試。"
+                )
+            return region(image, offset, language="eng")
         split = boundary - offset
         return paired_columns(image, split, offset)
 

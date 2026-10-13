@@ -115,6 +115,11 @@ def structure(blocks: list[Block], width: int, layout: str) -> tuple[list[Card],
             term_blocks = content[:stop]
             term = join_text(term_blocks)
             term = re.sub(r"^\d+[.)、]?\s*", "", term).strip()
+            embedded_pos = ""
+            if pos_at is None:
+                parts = term.rsplit(maxsplit=1)
+                if len(parts) == 2 and POS.fullmatch(parts[1]):
+                    term, embedded_pos = parts
             height = max(b.bbox[3] - b.bbox[1] for b in row)
             top = min(b.bbox[1] for b in row)
             bottom = max(b.bbox[3] for b in row)
@@ -171,10 +176,10 @@ def structure(blocks: list[Block], width: int, layout: str) -> tuple[list[Card],
                 reasons.append("Mixed-language definition or possible column mismatch")
             card = Card(
                 id=f"card-{len(cards) + 1}", term=term,
-                part_of_speech=join_text(pos_blocks).lower(),
+                part_of_speech=(join_text(pos_blocks) or embedded_pos).lower(),
                 definition=definition, source_block_ids=[b.id for b in content],
                 definitionOrigin="photo" if definition else "missing",
-                partOfSpeechOrigin="photo" if pos_blocks else "missing",
+                partOfSpeechOrigin="photo" if pos_blocks or embedded_pos else "missing",
                 needs_review=bool(reasons), review_reason="; ".join(reasons) or None,
                 selected=not reasons,
             )

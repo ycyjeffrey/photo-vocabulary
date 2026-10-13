@@ -266,7 +266,7 @@ export function App() {
                 </button>
               </div>
               {layout === 'eng-zh' && <p className="muted">
-                左半部用 Tesseract 英文模型，右半部用 PaddleOCR 中文模型，依同一列配對。請裁切到英中分隔位於圖片中央。
+                左半部用 PaddleOCR 專用英文模型，右半部用獨立中文模型，依同一列配對。請裁切到英中分隔位於圖片中央。
               </p>}
               {processing && <div role="status" className="progress"><span />{stages[job.status]}，請稍候。
                 {pollStopped && <button onClick={() => { setPollStopped(false); setError(''); }}>重新連線</button>}

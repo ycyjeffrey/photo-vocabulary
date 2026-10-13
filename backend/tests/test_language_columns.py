@@ -28,11 +28,9 @@ def test_each_language_gets_its_own_crop_and_global_coordinates(tmp_path, monkey
     split = 450 if layout == "eng-zh" else 310
 
     def ocr(crop, *, lang, **kwargs):
+        assert lang == "chi_tra+eng"
         calls.append((lang, crop.size))
-        entries = {
-            "chi_tra+eng": [("dog", 50), ("狗", 520)],
-            "eng": [("dog", 50)],
-        }[lang]
+        entries = [("dog", 50), ("狗", 520)]
         return {
             "text": [text for text, _ in entries], "conf": [98] * len(entries),
             "left": [x for _, x in entries], "top": [30] * len(entries),
@@ -40,19 +38,20 @@ def test_each_language_gets_its_own_crop_and_global_coordinates(tmp_path, monkey
         }
 
     monkeypatch.setattr("backend.ocr.pytesseract.image_to_data", ocr)
-    def chinese(crop, offset_x, offset_y):
-        calls.append(("paddleocr", crop.size))
-        return [block("chinese", "狗", 520 - split + offset_x, 30 + offset_y).model_copy(
-            update={"language": "chi_tra", "ocr_engine": "paddleocr"})]
+    def paddle(crop, offset_x, offset_y, *, language):
+        calls.append((language, crop.size))
+        text, x = ("dog", 50 + offset_x) if language == "eng" else ("狗", 520 - split + offset_x)
+        return [block("word", text, x, 30 + offset_y).model_copy(
+            update={"language": language, "ocr_engine": "paddleocr"})]
 
-    monkeypatch.setattr("backend.ocr.chinese_ocr.recognize", chinese)
+    monkeypatch.setattr("backend.ocr.paddle_ocr.recognize", paddle)
     blocks = recognize(image, layout, lambda: counted.append(True))
-    assert calls[-2:] == [("eng", (split, 200)), ("paddleocr", (900 - split, 200))]
+    assert calls[-2:] == [("eng", (split, 200)), ("chi_tra", (900 - split, 200))]
     assert len(calls) == len(counted) == (2 if layout == "eng-zh" else 3)
     assert [b.bbox for b in blocks] == [(50, 30, 100, 60), (520, 30, 570, 60)]
     assert len({b.id for b in blocks}) == len(blocks)
     assert [b.language for b in blocks] == ["eng", "chi_tra"]
-    assert [b.ocr_engine for b in blocks] == ["tesseract", "paddleocr"]
+    assert all(b.ocr_engine == "paddleocr" for b in blocks)
     cards, warnings = structure(blocks, 900, layout)
     assert [(c.term, c.definition) for c in cards] == [("dog", "狗")]
     assert not cards[0].confirmed
@@ -81,24 +80,34 @@ def test_chinese_bands_follow_english_rows_without_merging_cards(tmp_path, monke
     bands = []
     calls = []
 
-    def english(image, *, lang, **kwargs):
-        assert lang == "eng"
-        return {"text": ["dog", "cat"], "conf": [98, 98], "left": [50, 50],
-                "top": [30, 180], "width": [50, 50], "height": [30, 30]}
-
-    def chinese(image, offset_x, offset_y):
+    def paddle(image, offset_x, offset_y, *, language):
+        if language == "eng":
+            return [block("dog", "dog", 50, 30), block("cat", "cat", 50, 180)]
         bands.append((image.size, offset_x, offset_y))
         first = offset_y == 0
         return [block("meaning", "狗" if first else "貓", 520, 30 if first else 180).model_copy(
             update={"language": "chi_tra", "ocr_engine": "paddleocr"})]
 
-    monkeypatch.setattr("backend.ocr.pytesseract.image_to_data", english)
-    monkeypatch.setattr("backend.ocr.chinese_ocr.recognize", chinese)
+    monkeypatch.setattr("backend.ocr.paddle_ocr.recognize", paddle)
     blocks = recognize(path, "eng-zh", lambda: calls.append(True))
     assert bands == [((450, 165), 450, 0), ((450, 135), 450, 165)]
     assert len(calls) == 3
     cards, warnings = structure(blocks, 900, "eng-zh")
     assert [(card.term, card.definition) for card in cards] == [("dog", "狗"), ("cat", "貓")]
+    assert not warnings
+
+
+@pytest.mark.parametrize("text,term,pos", [
+    ("look after v.", "look after", "v."),
+    ("well-being n.", "well-being", "n."),
+    ("don't v.", "don't", "v."),
+    ("O'Brien", "O'Brien", ""),
+])
+def test_english_line_preserves_phrases_and_extracts_embedded_pos(text, term, pos):
+    cards, warnings = structure([block("a", text, 30, width=300), block("b", "釋義", 520)], 900, "eng-zh")
+    assert [(c.term, c.part_of_speech, c.definition) for c in cards] == [(term, pos, "釋義")]
+    assert cards[0].source_block_ids == ["a", "b"]
+    assert cards[0].partOfSpeechOrigin == ("photo" if pos else "missing")
     assert not warnings
 
 
@@ -138,3 +147,33 @@ def test_orphan_chinese_does_not_attach_to_a_distant_word():
     cards, warnings = structure([block("a", "dog", 50), block("b", "狗", 520, 180)], 900, "eng-zh")
     assert cards[0].definition == ""
     assert any("Unpaired definition" in warning for warning in warnings)
+
+
+@pytest.mark.parametrize("ambiguous", [False, True])
+def test_layout_probe_is_never_used_as_final_english(tmp_path, monkeypatch, ambiguous):
+    path = tmp_path / "probe.png"
+    Image.new("RGB", (900, 200), "white").save(path)
+    entries = [("d0g", 50, 30, 50)]
+    if ambiguous:
+        entries += [("狗", 520, 30, 50), ("long text", 50, 100, 530)]
+
+    def probe(*args, **kwargs):
+        assert kwargs["lang"] == "chi_tra+eng"
+        return {"text": [b[0] for b in entries], "left": [b[1] for b in entries],
+                "top": [b[2] for b in entries], "width": [b[3] for b in entries],
+                "height": [30] * len(entries), "conf": [98] * len(entries)}
+
+    def english(image, offset_x, offset_y, *, language):
+        assert not ambiguous and language == "eng"
+        return [block("english", "dog", 50).model_copy(
+            update={"language": "eng", "ocr_engine": "paddleocr"})]
+
+    monkeypatch.setattr("backend.ocr.pytesseract.image_to_data", probe)
+    monkeypatch.setattr("backend.ocr.paddle_ocr.recognize", english)
+    if ambiguous:
+        with pytest.raises(RuntimeError, match="左英文｜右中文"):
+            recognize(path, "auto")
+    else:
+        blocks = recognize(path, "auto")
+        assert [b.text for b in blocks] == ["dog"]
+        assert all(b.ocr_engine == "paddleocr" for b in blocks)

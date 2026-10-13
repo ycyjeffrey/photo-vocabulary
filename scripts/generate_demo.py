@@ -3,7 +3,7 @@ import argparse
 import json
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 SAMPLES = [
@@ -15,6 +15,10 @@ RIGHT = [
     ("protect", "v.", "保護"),
     ("nature", "n.", "自然"),
     ("forest", "n.", "森林"),
+]
+ENGLISH_TERMS = [
+    "accommodation", "environment", "through", "thought", "thorough", "affect",
+    "effect", "look after", "well-being", "don't", "O'Brien", "co-operate",
 ]
 
 
@@ -83,6 +87,18 @@ def generate(output: Path, font_path: str | None = None):
     }
     (output / "expected.json").write_text(json.dumps(expected, ensure_ascii=False, indent=2), encoding="utf-8")
     return expected
+
+
+def english_sample(font_path: str | None = None, size: int = 24,
+                   blur: float = 0.5, angle: float = 8) -> Image.Image:
+    font = fonts(font_path)[0].font_variant(size=size)
+    image = Image.new("RGB", (500, 65 * len(ENGLISH_TERMS) + 40), "white")
+    draw = ImageDraw.Draw(image)
+    for index, term in enumerate(ENGLISH_TERMS):
+        draw.text((60, 20 + index * 65), term, font=font, fill="#606060")
+    return image.filter(ImageFilter.GaussianBlur(blur)).rotate(
+        angle, expand=True, fillcolor="white", resample=Image.Resampling.BICUBIC,
+    )
 
 
 if __name__ == "__main__":

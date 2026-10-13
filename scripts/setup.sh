@@ -23,7 +23,7 @@ for language in eng chi_tra; do
     mv ".local/tessdata/$language.traineddata.part" ".local/tessdata/$language.traineddata"
   fi
 done
-.venv/bin/python scripts/setup_chinese_ocr.py
+.venv/bin/python scripts/setup_paddle_ocr.py
 npm --prefix frontend ci --no-audit --no-fund
 npm --prefix frontend run build
 echo "Ready. Start with: bash scripts/run.sh"
